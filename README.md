@@ -2,18 +2,17 @@
 #include <RTClib.h>
 #include <SoftwareSerial.h>
 SoftwareSerial gsm(4, 2); // RX, TX
- //Select your modem
-//SSL/TLS is currently supported only with SIM8xx series
+
 #define TINY_GSM_MODEM_SIM800
 
 //Increase RX buffer
 #define TINY_GSM_RX_BUFFER 256
 
-//NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN
-#include <TinyGPS++.h> //https://github.com/mikalhart/TinyGPSPlus
-#include <TinyGsmClient.h> //https://github.com/vshymanskyy/TinyGSM
-#include <ArduinoHttpClient.h> //https://github.com/arduino-libraries/ArduinoHttpClient
-//NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN
+
+#include <TinyGPS++.h> 
+#include <TinyGsmClient.h> 
+#include <ArduinoHttpClient.h>
+
 #include "RTClib.h"
 RTC_Millis rtc;
 String receivedDate;
@@ -25,49 +24,38 @@ String dakika= " ";
 /*rtc.begin(DateTime(F(__DATE__), F(__TIME__)));
   DateTime now = rtc.now();
       double endTime =now.hour()+float(0.01*now.minute());*/
-//NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN
+
 const char FIREBASE_HOST[]  = "esp32-af323-default-rtdb.firebaseio.com";
 const String FIREBASE_AUTH  = "74nQ7rOF7De1fyuHYJkbqsVDD7PD8dfC52BMSOrJ";
 const String FIREBASE_PATH  = "/";
 const int SSL_PORT          = 443;
-//NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN
 
-//NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN
-// Your GPRS credentials
-// Leave empty, if missing user or pass
 char apn[]  = "internet";
 char user[] = "";
 char pass[] = "";
-//NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN
 
-//NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN
 //GSM Module RX pin to ESP32 2
 //GSM Module TX pin to ESP32 4 ne yazıyorrsa o şekilde bağlantı yap
 #define rxPin 4
 #define txPin 2
 HardwareSerial sim800(1);
 TinyGsm modem(sim800);
-//NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN
 
-//NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN
 //GPS Module RX pin to ESP32 17
 //GPS Module TX pin to ESP32 16
 #define RXD2 16
 #define TXD2 17
 HardwareSerial neogps(2);
 TinyGPSPlus gps;
-//NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN
 
-//NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN
 TinyGsmClientSecure gsm_client_secure_modem(modem, 0);
 HttpClient http_client = HttpClient(gsm_client_secure_modem, FIREBASE_HOST, SSL_PORT);
-//NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN
+
 
 unsigned long previousMillis = 0;
 long interval = 10000;
 int counter;
 
-//**************************************************************************************************
 void setup() {
   Serial.begin(115200);
   gsm.begin(9600);
@@ -112,10 +100,7 @@ rtc.begin(DateTime(F(__DATE__), F(__TIME__)));
   
   http_client.setHttpResponseTimeout(90 * 1000); //^0 secs timeout
 }
-//**************************************************************************************************
 
-
-//**************************************************************************************************
 void loop() {
   DateTime now = rtc.now();
       double endTime =now.hour()+float(0.01*now.minute());
@@ -155,30 +140,6 @@ Serial.print("AT+CCLK?");
     }onceki=simdi;
   }*/
 
- 
-  
-  
-  //NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN
-  //Restart takes quite some time
-  //To skip it, call init() instead of restart()
-  //Serial.println("Initializing modem...");
-  //modem.init();
-  //String modemInfo = modem.getModemInfo();
-  //Serial.print("Modem: ");
-  //Serial.println(modemInfo);
-  //NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN
-  
-  //NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN
-  //Serial.print(F("Waiting for network..."));
-  //if (!modem.waitForNetwork()) {
-    //Serial.println(" fail");
-    //delay(1000);
-    //return;
-  //}
-  //Serial.println(" OK");
-  //NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN
-    
-  //NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN
   Serial.print(F("Connecting to "));
   Serial.print(apn);
   if (!modem.gprsConnect(apn, user, pass)) {
@@ -207,15 +168,12 @@ Serial.print("AT+CCLK?");
   }
   //MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
 }
-//**************************************************************************************************
 
-//**************************************************************************************************
 void PostToFirebase(const char* method, const String & path , const String & data, HttpClient* http) {
   String response;
   int statusCode = 0;
   http->connectionKeepAlive(); // Currently, this is needed for HTTPS
   
-  //NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN
   String url;
   if (path[0] != '/') {
     url = "/";
@@ -226,7 +184,6 @@ void PostToFirebase(const char* method, const String & path , const String & dat
   Serial.println(url);
   Serial.print("Data:");
   Serial.println(data);
-  //NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN
   
   String contentType = "application/json";
   http->put(url, contentType, data);
@@ -240,9 +197,7 @@ void PostToFirebase(const char* method, const String & path , const String & dat
   response = http->responseBody();
   Serial.print("Response: ");
   Serial.println(response);
-  //NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN
 
-  //NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN
   if (!http->connected()) {
     Serial.println();
     http->stop();// Shutdown
@@ -250,10 +205,7 @@ void PostToFirebase(const char* method, const String & path , const String & dat
   }
   //NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN
 }
-//**************************************************************************************************
 
-
-//**************************************************************************************************
 void gps_loop()
 {
   //NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN
@@ -281,7 +233,7 @@ void gps_loop()
       }
     }
   }
-  //NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN
+ 
  int counter=0;
   for (int counter = 0 ; counter <= 100000; counter = counter +1)
 
@@ -289,7 +241,7 @@ void gps_loop()
  // counter = counter +1;
  // counter++;
   
-  //NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN
+ 
   //If newData is true
   if(true){
   newData = false;
@@ -375,5 +327,4 @@ void gps_loop()
   
 
   }
-  //NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN
 }
